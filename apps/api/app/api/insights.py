@@ -1,0 +1,205 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from datetime import datetime
+from pydantic import BaseModel
+from typing import Optional, List
+
+from app.core.database import get_db
+from app.core.security import get_current_user
+from app.models.zoro_insight import ZoroInsight
+from app.models.user import User
+from app.services.tdee_engine import run_tdee_engine, BehaviorWindow
+from app.services.ai_service import ai_service
+
+router = APIRouter()
+
+
+# ---- Response schemas ----
+
+class BehaviorWindowResponse(BaseModel):
+    avg_calories: float
+    avg_protein_g: float
+    weekday_avg: float
+    weekend_avg: float
+    weekend_spike_kcal: float
+    logging_days: int
+    protein_adherence_pct: float
+
+
+class InsightResponse(BaseModel):
+    status: str  # "ready" | "insufficient_data" | "error"
+    window_days: int
+    avg_intake_kcal: float
+    observed_rate_kg_week: float
+    maintenance_estimate_kcal: float
+    recommended_adjustment_kcal: float
+    new_target_kcal: float
+    confidence_score: float
+    confidence_label: str   # "High" | "Moderate" | "Low" | "Insufficient"
+    confidence_reasons: List[str]
+    ai_explanation: Optional[str]
+    behavior: BehaviorWindowResponse
+    pending_insight_id: Optional[int]
+
+
+class ApplyInsightRequest(BaseModel):
+    insight_id: int
+    action: str  # "apply" | "dismiss"
+
+
+class ApplyInsightResponse(BaseModel):
+    success: bool
+    new_target_kcal: Optional[float]
+    message: str
+
+
+def _confidence_label(score: float) -> str:
+    if score >= 0.75:
+        return "High"
+    elif score >= 0.50:
+        return "Moderate"
+    elif score > 0:
+        return "Low"
+    return "Insufficient"
+
+
+@router.get("/latest", response_model=InsightResponse)
+def get_latest_insight(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Runs the TDEE engine and returns the latest computed insight.
+    Also checks if there is an unresolved insight already stored (avoids recomputing).
+    """
+    # Check for pending (unresolved) insight first
+    pending = (
+        db.query(ZoroInsight)
+        .filter(ZoroInsight.user_id == current_user.id, ZoroInsight.status == "pending_review")
+        .order_by(ZoroInsight.computed_at.desc())
+        .first()
+    )
+
+    # Run the engine fresh regardless (behavior window always needs live data)
+    result = run_tdee_engine(current_user.id, db)
+
+    behavior_resp = BehaviorWindowResponse(
+        avg_calories=result.behavior.avg_calories,
+        avg_protein_g=result.behavior.avg_protein_g,
+        weekday_avg=result.behavior.weekday_avg,
+        weekend_avg=result.behavior.weekend_avg,
+        weekend_spike_kcal=result.behavior.weekend_spike_kcal,
+        logging_days=result.behavior.logging_days,
+        protein_adherence_pct=result.behavior.protein_adherence_pct,
+    )
+
+    ai_explanation = None
+    stored_insight_id = pending.id if pending else None
+
+    # If the engine produced a recommendation and there is no pending insight, store it
+    if result.status == "ready" and not pending:
+        # Ask AI to explain the result in plain English
+        try:
+            ai_prompt = f"""
+You are Zoro, a friendly nutritional AI assistant.
+Explain the following insight to the user in 2-3 warm, plain-English sentences.
+Do NOT use bullet points or markdown. Do NOT say "I" too much. Be concise.
+
+Data:
+- Analysis window: {result.window_days} days
+- Average daily intake: {result.avg_intake_kcal:.0f} kcal
+- Observed weight change: {result.observed_rate_kg_week:+.2f} kg/week
+- Estimated maintenance calories: {result.maintenance_estimate_kcal:.0f} kcal/day
+- Recommended adjustment: {result.recommended_adjustment_kcal:+.0f} kcal/day
+- New proposed target: {result.new_target_kcal:.0f} kcal/day
+- Confidence: {_confidence_label(result.confidence_score)}
+
+Keep the tone analytical but warm. End with "Would you like to apply this change?"
+"""
+            ai_explanation = ai_service.generate(ai_prompt)
+        except Exception:
+            ai_explanation = (
+                f"Based on {result.window_days} days of tracking, you averaged "
+                f"{result.avg_intake_kcal:.0f} kcal/day and your weight trend is "
+                f"{result.observed_rate_kg_week:+.2f} kg/week. "
+                f"A {result.recommended_adjustment_kcal:+.0f} kcal/day adjustment is suggested. "
+                "Would you like to apply this change?"
+            )
+
+        new_insight = ZoroInsight(
+            user_id=current_user.id,
+            window_days=result.window_days,
+            avg_intake_kcal=result.avg_intake_kcal,
+            observed_rate_kg_week=result.observed_rate_kg_week,
+            maintenance_estimate_kcal=result.maintenance_estimate_kcal,
+            recommended_adjustment_kcal=result.recommended_adjustment_kcal,
+            new_target_kcal=result.new_target_kcal,
+            confidence_score=result.confidence_score,
+            confidence_reasons=result.confidence_reasons,
+            ai_explanation=ai_explanation,
+            status="pending_review",
+        )
+        db.add(new_insight)
+        db.commit()
+        db.refresh(new_insight)
+        stored_insight_id = new_insight.id
+
+    elif pending:
+        ai_explanation = pending.ai_explanation
+
+    return InsightResponse(
+        status=result.status,
+        window_days=result.window_days,
+        avg_intake_kcal=result.avg_intake_kcal,
+        observed_rate_kg_week=result.observed_rate_kg_week,
+        maintenance_estimate_kcal=result.maintenance_estimate_kcal,
+        recommended_adjustment_kcal=result.recommended_adjustment_kcal,
+        new_target_kcal=result.new_target_kcal,
+        confidence_score=result.confidence_score,
+        confidence_label=_confidence_label(result.confidence_score),
+        confidence_reasons=result.confidence_reasons,
+        ai_explanation=ai_explanation,
+        behavior=behavior_resp,
+        pending_insight_id=stored_insight_id,
+    )
+
+
+@router.post("/apply", response_model=ApplyInsightResponse)
+def apply_insight(
+    payload: ApplyInsightRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    insight = db.query(ZoroInsight).filter(
+        ZoroInsight.id == payload.insight_id,
+        ZoroInsight.user_id == current_user.id,
+    ).first()
+
+    if not insight:
+        raise HTTPException(status_code=404, detail="Insight not found.")
+
+    if insight.status != "pending_review":
+        raise HTTPException(status_code=400, detail=f"Insight already {insight.status}.")
+
+    if payload.action == "apply":
+        current_user.target_calories = insight.new_target_kcal
+        insight.status = "applied"
+        insight.resolved_at = datetime.utcnow()
+        db.commit()
+        return ApplyInsightResponse(
+            success=True,
+            new_target_kcal=insight.new_target_kcal,
+            message=f"Target updated to {insight.new_target_kcal:.0f} kcal/day.",
+        )
+
+    elif payload.action == "dismiss":
+        insight.status = "dismissed"
+        insight.resolved_at = datetime.utcnow()
+        db.commit()
+        return ApplyInsightResponse(
+            success=True,
+            new_target_kcal=None,
+            message="Insight dismissed. Keep tracking to generate a future recommendation.",
+        )
+
+    raise HTTPException(status_code=400, detail="Invalid action. Use 'apply' or 'dismiss'.")

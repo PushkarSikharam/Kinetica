@@ -11,6 +11,7 @@ export function persistSession(token: string, role?: string) {
 
   if (role) {
     localStorage.setItem(ROLE_KEY, role);
+    document.cookie = `${ROLE_KEY}=${role}; path=/; max-age=604800; samesite=lax`;
   }
 }
 
@@ -22,6 +23,7 @@ export function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(ROLE_KEY);
   document.cookie = `${TOKEN_KEY}=; path=/; max-age=0; samesite=lax`;
+  document.cookie = `${ROLE_KEY}=; path=/; max-age=0; samesite=lax`;
 }
 
 export function getStoredRole(): string | null {

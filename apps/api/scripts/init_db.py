@@ -1,6 +1,12 @@
-import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+from alembic import command
+from alembic.config import Config
 
-from app.main import Base, engine
-Base.metadata.create_all(bind=engine)
-print("All tables created successfully.")
+
+def main() -> None:
+    config = Config("alembic.ini")
+    command.upgrade(config, "head")
+    print("Database migrated to latest revision.")
+
+
+if __name__ == "__main__":
+    main()

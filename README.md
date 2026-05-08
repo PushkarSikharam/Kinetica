@@ -7,9 +7,9 @@
 <p>
   <img alt="Frontend" src="https://img.shields.io/badge/Frontend-Next.js%2015-black">
   <img alt="Backend" src="https://img.shields.io/badge/Backend-FastAPI-05998b">
-  <img alt="Database" src="https://img.shields.io/badge/Database-SQLite-3f7ad6">
+  <img alt="Database" src="https://img.shields.io/badge/Database-SQLite%20now%20%7C%20PostgreSQL%20ready-3f7ad6">
   <img alt="AI" src="https://img.shields.io/badge/AI-Gemini-f9ab00">
-  <img alt="Status" src="https://img.shields.io/badge/Phase-1%20Complete-2ea44f">
+  <img alt="Status" src="https://img.shields.io/badge/Phase-2%20Complete-2ea44f">
 </p>
 
 </div>
@@ -208,7 +208,7 @@ This layer stores both raw activity and derived application state.
 | `meal_entries` | every logged meal event |
 | `daily_summaries` | daily aggregate calories and macros |
 | `user_weights` | raw weights and EWMA trend weights |
-| `kinetic_insights` | stored adaptive recommendation snapshots |
+| `zoro_insights` | stored adaptive recommendation snapshots |
 | `user_feedbacks` | user-to-admin feedback records |
 
 ---
@@ -329,9 +329,18 @@ npm run dev
 ## Local Development Notes
 
 - SQLite is still used for local persistence
+- PostgreSQL is now supported by setting `SQLALCHEMY_DATABASE_URI`
+- Alembic now manages schema creation and versioning
 - the frontend expects `http://localhost:8000/api/v1` by default
-- `admin@kinetic.com` is treated as an admin account in local registration to simplify testing
+- `admin@zoro.com` is treated as an admin account in local registration to simplify testing
 - some older landing/admin screens still need lint cleanup outside the main app flow
+
+### Apply migrations
+
+```bash
+cd "E:\Calorie Tracker\apps\api"
+venv\Scripts\python scripts\init_db.py
+```
 
 ---
 
@@ -343,7 +352,7 @@ npm run dev
 4. Log daily weights in Analytics
 5. Generate and review adaptive insights
 6. Submit feedback as a user
-7. Register `admin@kinetic.com`
+7. Register `admin@zoro.com`
 8. Review feedback in `/admin/feedback`
 
 ---
@@ -352,43 +361,89 @@ npm run dev
 
 | Area | Current Status |
 |---|---|
-| Secrets | still hardcoded in backend config |
-| Database | still SQLite for local development |
-| Migrations | Alembic not added yet |
-| Auth hardening | frontend protection is still lightweight |
-| AI safety | rate limiting not implemented yet |
+| Secrets | moved to environment-driven config, but secure secret storage and rotation are still pending |
+| Database | PostgreSQL-ready, though local development still defaults to SQLite |
+| Migrations | Alembic is in place, but future schema changes still need new revisions |
+| Auth hardening | backend protection is enforced, but frontend middleware still relies on cookies rather than server-side token introspection |
+| AI safety | endpoint rate limiting is in place, but quota monitoring and abuse analytics are still pending |
 | Deployment | containerization and production infra still pending |
 
 ---
 
-## Next Steps
+## Roadmap
 
-### Phase 2: Production Infrastructure
+### Phase 1: Application Completion
 
-- move secrets into environment variables
-- migrate SQLite to PostgreSQL
-- introduce Alembic migrations
-- harden auth and admin authorization
-- add API rate limiting for AI endpoints
+Completed:
+- real auth flow
+- onboarding and profile persistence
+- persistent meal logging and meal history
+- weight, insights, and feedback wired to authenticated users
+- admin feedback review
+- removal of prototype-style single-user assumptions
 
-### Phase 3: Data Engineering Layer
+Why it mattered:
+- this turned the product from a partially mocked prototype into a real multi-user application flow
 
-- add a `data/` workspace
-- introduce dbt models for analytics
-- build marts for nutrition, adherence, and insights
-- add orchestration for scheduled transformations
+### Phase 2: Backend Hardening
+
+Completed:
+- environment-driven configuration
+- Alembic migration system
+- PostgreSQL-ready SQLAlchemy configuration
+- JWT hardening and admin access enforcement
+- AI endpoint rate limiting
+- stronger database constraints and validation
+
+Why it mattered:
+- this made the backend production-shaped without forcing an immediate runtime database switch
+
+Important note:
+- the current local runtime database is still SQLite
+- PostgreSQL support is implemented, but not yet activated in the default local environment
+
+### Phase 3: Data Engineering Foundation
+
+Planned:
+- switch the active runtime database from SQLite to PostgreSQL
+- provision local PostgreSQL and update `SQLALCHEMY_DATABASE_URI`
+- run Alembic against PostgreSQL and reseed baseline food data
+- verify that new writes are landing in PostgreSQL
+- add a top-level `data/` workspace
+- introduce dbt staging models and marts
+- add data quality checks
+- add the first orchestrated analytics pipeline
 - prepare ML-ready feature tables
 
-### Phase 4: Product Hardening
+Why this phase:
+- PostgreSQL is the right base before building a serious analytics and data-engineering layer
 
-- add backend and frontend tests
-- improve observability and error handling
+### Phase 4: Intelligence Expansion
+
+Planned:
+- increase TDEE engine test coverage
+- improve NLP parsing reliability
+- add stronger AI output validation
+- prepare recommendation and prediction feature sets
+- improve explainability around adaptive calorie changes
+
+Why this phase:
+- once app and data layers are stable, intelligence work becomes much easier to trust and scale
+
+### Phase 5: Production Readiness
+
+Planned:
+- add broader backend and frontend test coverage
+- improve observability and structured error handling
 - clean remaining frontend lint issues
 - containerize the stack
-- prepare deployment workflows
+- prepare deployment workflows and operational setup
+
+Why this phase:
+- this turns the project from a strong local system into a deployable product platform
 
 ---
 
 ## Summary
 
-Kinetic is now a real authenticated application with persisted nutrition data, feedback workflows, AI augmentation, and a deterministic adaptive recommendation engine. The next major step is to harden the infrastructure and add a clean data engineering layer on top of the transactional system.
+Kinetic is now a real authenticated application with persisted nutrition data, feedback workflows, AI augmentation, and a deterministic adaptive recommendation engine. The next major step is Phase 3: activate PostgreSQL as the runtime database and build the data engineering layer cleanly on top of it.

@@ -59,7 +59,11 @@ export default function RegisterPage() {
       persistSession(tokenPayload.access_token, profile.role);
       router.push("/onboarding");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to create account.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to create account. Check that the backend is running and reachable.",
+      );
     } finally {
       setIsLoading(false);
     }

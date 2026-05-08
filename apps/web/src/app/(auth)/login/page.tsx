@@ -47,7 +47,11 @@ export default function LoginPage() {
       persistSession(tokenPayload.access_token, profile.role);
       router.push(profile.role === "admin" ? "/admin/dashboard" : "/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to sign in.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to sign in. Check that the backend is running and reachable.",
+      );
     } finally {
       setIsLoading(false);
     }

@@ -25,10 +25,20 @@ export async function apiFetch(path: string, options: AuthFetchOptions = {}) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(
+        `Unable to reach the API at ${API_BASE_URL}. Check that the backend is running and that CORS allows your frontend origin.`,
+      );
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const text = await response.text();

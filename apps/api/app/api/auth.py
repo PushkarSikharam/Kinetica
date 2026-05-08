@@ -46,7 +46,7 @@ def login_access_token(db: Session = Depends(get_db), form_data: OAuth2PasswordR
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     
     return {
-        "access_token": create_access_token(data={"sub": user.email}),
+        "access_token": create_access_token(data={"sub": user.email, "role": user.role.value}),
         "token_type": "bearer",
     }
 

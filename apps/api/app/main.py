@@ -1,18 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.core.database import engine, Base
-
-# Import models here to ensure they are registered with SQLAlchemy
-from app.models.user import User
-from app.models.food import Food
-from app.models.meal import MealEntry, DailySummary
-from app.models.feedback import UserFeedback
-from app.models.user_weight import UserWeight
-from app.models.zoro_insight import ZoroInsight
-
-# Auto-create tables for local development with SQLite
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -20,12 +8,12 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Set all CORS enabled origins
 from app.api import auth, chat, feedback, foods, insights, meals, users, weight
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://192.168.5.71:3000"],
+    allow_origins=settings.cors_origins,
+    allow_origin_regex=settings.BACKEND_CORS_ORIGIN_REGEX if settings.ENVIRONMENT == "development" else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

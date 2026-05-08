@@ -1,7 +1,8 @@
 from google import genai
 from google.genai import types
-from app.core.config import settings
 import logging
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class AIService:
             raise RuntimeError("GEMINI_API_KEY is not configured.")
         
         response = self.client.models.generate_content(
-            model="gemini-2.0-flash",
+            model=settings.GEMINI_MODEL_NAME,
             contents=prompt,
             config=types.GenerateContentConfig(
                 temperature=0.7,

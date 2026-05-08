@@ -4,6 +4,8 @@ from datetime import date
 import logging
 
 from app.core.database import get_db
+from app.core.config import settings
+from app.core.rate_limit import rate_limit_dependency
 from app.core.security import get_current_user
 from app.models.meal import DailySummary
 from app.models.user import User
@@ -18,6 +20,13 @@ router = APIRouter()
 async def chat_with_zoro(
     request: ChatRequest,
     db: Session = Depends(get_db),
+    _: None = Depends(
+        rate_limit_dependency(
+            limit=settings.AI_CHAT_RATE_LIMIT_COUNT,
+            window_seconds=settings.AI_CHAT_RATE_LIMIT_WINDOW_SECONDS,
+            scope="ai-chat",
+        )
+    ),
     current_user: User = Depends(get_current_user),
 ):
     """

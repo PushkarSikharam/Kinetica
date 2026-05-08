@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, Date, DateTime, ForeignKey
+from sqlalchemy import Column, Date, DateTime, Float, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -9,6 +9,9 @@ class UserWeight(Base):
     The trend_weight column stores the EWMA-smoothed value computed on insert.
     """
     __tablename__ = "user_weights"
+    __table_args__ = (
+        UniqueConstraint("user_id", "date_logged", name="uq_user_weights_user_id_date_logged"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)

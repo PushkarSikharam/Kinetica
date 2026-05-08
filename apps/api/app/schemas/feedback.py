@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -18,7 +18,7 @@ class FeedbackResponse(BaseModel):
 
 
 class FeedbackStatusUpdate(BaseModel):
-    status: str
+    status: Literal["unread", "read", "resolved"]
 
 
 class FeedbackListResponse(BaseModel):

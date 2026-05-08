@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Date
+from sqlalchemy import Column, Date, DateTime, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -31,6 +31,9 @@ class MealEntry(Base):
 class DailySummary(Base):
     """Aggregate daily table for the 14-day trailing average algorithm."""
     __tablename__ = "daily_summaries"
+    __table_args__ = (
+        UniqueConstraint("user_id", "date_logged", name="uq_daily_summaries_user_id_date_logged"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

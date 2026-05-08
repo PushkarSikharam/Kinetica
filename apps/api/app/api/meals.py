@@ -5,7 +5,9 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
+from app.core.rate_limit import rate_limit_dependency
 from app.core.security import get_current_user
 from app.models.food import Food
 from app.models.meal import DailySummary, MealEntry
@@ -234,8 +236,16 @@ def delete_meal_entry(
 @router.post("/parse-text", response_model=NLPLogResponse)
 async def parse_natural_language_meal(
     request: NLPLogRequest,
-    _: User = Depends(get_current_user),
+    rate_limit_guard: None = Depends(
+        rate_limit_dependency(
+            limit=settings.AI_MEAL_PARSE_RATE_LIMIT_COUNT,
+            window_seconds=settings.AI_MEAL_PARSE_RATE_LIMIT_WINDOW_SECONDS,
+            scope="ai-meal-parse",
+        )
+    ),
+    current_user: User = Depends(get_current_user),
 ) -> Any:
+    _ = (rate_limit_guard, current_user)
     try:
         prompt = f"""
         Extract the food, quantity, and unit from this log. Your response MUST be raw JSON and absolutely nothing else.

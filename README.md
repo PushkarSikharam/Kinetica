@@ -30,23 +30,6 @@ The project is designed as a product system. The core philosophy:
 
 ---
 
-## 📸 Screenshots & Demos
-
-> **Note:** Add screenshots here before finalizing your portfolio! Replace the placeholder images with real screenshots.
-
-<div align="center">
-  <img src="https://via.placeholder.com/800x400.png?text=Dashboard+Screenshot" alt="Dashboard" width="80%">
-  <p><em>Dashboard showing katori/roti logging and daily macros</em></p>
-  <br>
-
-  <img src="https://via.placeholder.com/800x400.png?text=Analytics+Screenshot" alt="Analytics" width="80%">
-  <p><em>Analytics page featuring EWMA weight smoothing graphs</em></p>
-  <br>
-
-  <img src="https://via.placeholder.com/800x400.png?text=AI+Chatbot+Screenshot" alt="AI Chatbot" width="80%">
-  <p><em>Contextual AI Chatbot in action</em></p>
-</div>
-
 ---
 
 ## 🛠️ Tech Stack

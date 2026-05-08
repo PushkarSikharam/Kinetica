@@ -1,11 +1,11 @@
 <div align="center">
 
-# Zoro Food Tracker
+# Kinetic
 
-**Indian-first nutrition tracking with adaptive calorie intelligence**
+**An ML-backed adaptive metabolic engine and nutrition platform.**
 
 <p>
-  <img alt="Frontend" src="https://img.shields.io/badge/Frontend-Next.js-black">
+  <img alt="Frontend" src="https://img.shields.io/badge/Frontend-Next.js%2015-black">
   <img alt="Backend" src="https://img.shields.io/badge/Backend-FastAPI-05998b">
   <img alt="Database" src="https://img.shields.io/badge/Database-SQLite-3f7ad6">
   <img alt="AI" src="https://img.shields.io/badge/AI-Gemini-f9ab00">
@@ -16,40 +16,72 @@
 
 ## Overview
 
-Zoro is a full-stack nutrition tracking application that combines:
+Kinetic is a full-stack nutrition tracking application that moves beyond static calorie counting formulas. It acts as a dynamic metabolic engine, combining:
 
-- food logging
-- weight trend analysis
-- adaptive calorie recommendations
-- natural-language meal parsing
-- contextual AI chat
-- admin feedback review
+- Context-aware food logging
+- Exponentially Weighted Moving Average (EWMA) weight trend analysis
+- Adaptive calorie recommendations based on real metabolic flux
+- Natural-language meal parsing
+- Contextual AI chat
+- Admin feedback review
 
-The project is designed as a product system, not just a calorie counter. The core idea is simple:
-
-> track user behavior, calculate real nutrition state, and adapt calorie targets using deterministic logic instead of static formulas alone.
+The project is designed as a product system. The core philosophy:
+> **Track user behavior, calculate the true physiological state, and adapt calorie targets using deterministic logic rather than static formulas alone.**
 
 ---
 
-## What This System Does
+## 📸 Screenshots & Demos
 
-Zoro's primary responsibility is to:
+> **Note:** Add screenshots here before finalizing your portfolio! Replace the placeholder images with real screenshots.
 
-| Capability | Purpose |
-|---|---|
-| User authentication | Securely identify and scope all user data |
-| Onboarding + profile setup | Capture goals, calorie targets, and Indian household calibration |
-| Meal logging | Store structured food events and compute nutrition values |
-| Weight tracking | Record raw weights and smoothed trend weights |
-| Adaptive insight generation | Estimate maintenance calories and recommend target changes |
-| AI assistance | Parse free-text meals and explain context-aware nutrition state |
-| Feedback workflow | Let users submit feedback and admins review it |
+<div align="center">
+  <img src="https://via.placeholder.com/800x400.png?text=Dashboard+Screenshot" alt="Dashboard" width="80%">
+  <p><em>Dashboard showing katori/roti logging and daily macros</em></p>
+  <br>
+
+  <img src="https://via.placeholder.com/800x400.png?text=Analytics+Screenshot" alt="Analytics" width="80%">
+  <p><em>Analytics page featuring EWMA weight smoothing graphs</em></p>
+  <br>
+
+  <img src="https://via.placeholder.com/800x400.png?text=AI+Chatbot+Screenshot" alt="AI Chatbot" width="80%">
+  <p><em>Contextual AI Chatbot in action</em></p>
+</div>
+
+---
+
+## 🛠️ Tech Stack
+
+- ⚡ **Frontend:** Next.js 15, React, TailwindCSS, TypeScript
+- 🚀 **Backend:** FastAPI, Python, Pydantic
+- 🗄️ **Database:** SQLite (Migrating to PostgreSQL + Alembic)
+- 🧠 **Intelligence:** Google Gemini AI, EWMA Smoothing, OLS Linear Regression
+
+---
+
+## 🌟 Core Features
+
+### Adaptive Engine Capabilities
+- **EWMA Smoothing:** Filters out daily scale noise to find the true weight trend.
+- **OLS Trend Estimation:** Uses Ordinary Least Squares regression to calculate precise weight velocity.
+- **Maintenance Calorie Estimation:** Dynamically back-calculates true TDEE based on intake vs. trend.
+- **Confidence Gating & Safety:** Applies calorie floor logic and bounds adjustments to a safe +/-150 kcal range.
+
+### Indian-First Nutrition Tracking
+- Native support for katori-based and roti-based logging.
+- Seeded Indian food catalog with regional variations.
+- Custom oil-level calibration.
+
+### Seamless User Experience
+- JWT-based authenticated API access.
+- Natural language meal parsing (e.g., "I ate 2 rotis and a bowl of dal").
+- Contextual floating AI chat that understands the user's current nutritional state.
+- Integrated feedback submission and admin review dashboard.
 
 ---
 
 ## Full System Architecture
 
-Zoro is organized into three main layers:
+Kinetic is organized into three main layers:
 
 1. **Application Layer**
 2. **Intelligence Layer**
@@ -130,7 +162,6 @@ sequenceDiagram
 This is the user-facing product experience.
 
 #### Frontend responsibilities
-
 - render login and registration flows
 - collect onboarding inputs
 - allow food search and meal logging
@@ -141,7 +172,6 @@ This is the user-facing product experience.
 - host the floating AI chat experience
 
 #### Backend responsibilities
-
 - validate and authenticate requests
 - expose stable REST APIs
 - compute meal-derived nutrition values
@@ -151,31 +181,21 @@ This is the user-facing product experience.
 
 ### 2. Intelligence Layer
 
-This layer has two separate parts.
+This layer is the core differentiator, separated into deterministic and AI-driven logic.
 
-#### Deterministic engine
+#### Deterministic Engine (The Math)
+This is the analytical source of truth. Standard TDEE formulas (like Mifflin-St Jeor) are static and often inaccurate. Kinetic solves this using data science:
+- **EWMA Smoothing:** $S_t = \alpha Y_t + (1 - \alpha) S_{t-1}$ is used to smooth daily weight fluctuations (water retention, sodium, etc.).
+- **OLS Regression:** Applies linear regression over the smoothed trend to determine true weight loss/gain velocity.
+- **Dynamic Adjustments:** Calculates required calorie adjustments based on the delta between expected weight velocity and actual velocity, gated by statistical confidence.
 
-This is the analytical source of truth.
-
-It handles:
-
-- EWMA smoothing for daily weight noise
-- OLS regression for real trend estimation
-- maintenance calorie estimation
-- confidence gating before recommendations
-- safe bounded calorie adjustments
-
-#### AI layer
-
+#### AI Layer (The UX)
 This is the UX augmentation layer.
-
-It handles:
-
 - natural-language meal parsing
 - contextual nutrition chat
 - plain-English explanation of system outputs
 
-**Important:** AI helps with usability, but the adaptive recommendation logic comes from deterministic code.
+**Important:** AI handles the unstructured data and usability, but the adaptive recommendation logic strictly comes from the deterministic math engine.
 
 ### 3. Persistence Layer
 
@@ -188,7 +208,7 @@ This layer stores both raw activity and derived application state.
 | `meal_entries` | every logged meal event |
 | `daily_summaries` | daily aggregate calories and macros |
 | `user_weights` | raw weights and EWMA trend weights |
-| `zoro_insights` | stored adaptive recommendation snapshots |
+| `kinetic_insights` | stored adaptive recommendation snapshots |
 | `user_feedbacks` | user-to-admin feedback records |
 
 ---
@@ -242,96 +262,6 @@ apps/
         api.ts
         auth.ts
 ```
-
----
-
-## Main Product Flows
-
-### Authentication Flow
-
-```text
-Register / Login
-  -> FastAPI auth endpoint
-  -> JWT returned
-  -> token stored in browser
-  -> protected UI can call authenticated APIs
-```
-
-### Onboarding Flow
-
-```text
-User completes setup
-  -> profile values are persisted
-  -> calorie target and household calibration are saved
-  -> optional first weight is logged
-  -> dashboard starts with real baseline data
-```
-
-### Meal Logging Flow
-
-```text
-User searches a food or types a natural sentence
-  -> backend resolves food + quantity + unit
-  -> meal entry is stored
-  -> daily summary is recalculated
-  -> dashboard calories and macros update
-```
-
-### Weight + Insight Flow
-
-```text
-User logs weight
-  -> raw weight is stored
-  -> EWMA trend is stored
-  -> analytics requests insight
-  -> TDEE engine evaluates intake vs trend
-  -> recommendation is returned or saved
-```
-
-### Feedback Flow
-
-```text
-User submits feedback
-  -> backend stores message
-  -> admin opens feedback queue
-  -> status can be updated from unread to processed
-```
-
----
-
-## What Is Working Now
-
-### Phase 1 Complete
-
-- real registration and login
-- JWT-based authenticated API access
-- current-user profile loading and update flows
-- onboarding persistence
-- authenticated meal logging
-- meal edit and delete
-- daily nutrition summary rebuilding
-- authenticated weight logging
-- adaptive insights apply/dismiss flow
-- contextual AI chat
-- user feedback submission
-- admin feedback review
-
-### Adaptive Engine Features
-
-- EWMA smoothing
-- OLS trend estimation
-- maintenance calorie estimation
-- confidence gating
-- calorie floor logic
-- +/-150 kcal recommendation clamp
-
-### Indian-First Features
-
-- katori-based logging
-- roti-based logging
-- gram-based logging
-- seeded Indian food catalog
-- oil-level calibration
 
 ---
 
@@ -400,7 +330,7 @@ npm run dev
 
 - SQLite is still used for local persistence
 - the frontend expects `http://localhost:8000/api/v1` by default
-- `admin@zoro.com` is treated as an admin account in local registration to simplify testing
+- `admin@kinetic.com` is treated as an admin account in local registration to simplify testing
 - some older landing/admin screens still need lint cleanup outside the main app flow
 
 ---
@@ -413,7 +343,7 @@ npm run dev
 4. Log daily weights in Analytics
 5. Generate and review adaptive insights
 6. Submit feedback as a user
-7. Register `admin@zoro.com`
+7. Register `admin@kinetic.com`
 8. Review feedback in `/admin/feedback`
 
 ---
@@ -461,4 +391,4 @@ npm run dev
 
 ## Summary
 
-Zoro is now a real authenticated application with persisted nutrition data, feedback workflows, AI augmentation, and a deterministic adaptive recommendation engine. The next major step is to harden the infrastructure and add a clean data engineering layer on top of the transactional system.
+Kinetic is now a real authenticated application with persisted nutrition data, feedback workflows, AI augmentation, and a deterministic adaptive recommendation engine. The next major step is to harden the infrastructure and add a clean data engineering layer on top of the transactional system.

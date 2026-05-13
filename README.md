@@ -30,8 +30,6 @@ The project is designed as a product system. The core philosophy:
 
 ---
 
----
-
 ## 🛠️ Tech Stack
 
 - ⚡ **Frontend:** Next.js 15, React, TailwindCSS, TypeScript
